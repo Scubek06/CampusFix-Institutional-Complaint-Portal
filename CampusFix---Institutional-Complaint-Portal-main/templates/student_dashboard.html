@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <h2>Welcome, {{ current_user.username }}!</h2>
+            <p class="text-muted">Student Dashboard</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('submit_complaint') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> New Complaint
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>Total Complaints</h5>
+                    <h2>{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5>Pending</h5>
+                    <h2>{{ stats.pending }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>In Progress</h5>
+                    <h2>{{ stats.in_progress }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>Resolved</h5>
+                    <h2>{{ stats.resolved }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Complaints -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4>Trending Issues</h4>
+            <div class="row">
+                {% for complaint in trending %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ complaint.title }}</h6>
+                                <p class="card-text small">{{ complaint.category }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">{{ complaint.vote_count }} votes</span>
+                                    <button class="btn btn-sm btn-outline-primary vote-btn" data-complaint-id="{{ complaint._id }}">
+                                        <i class="bi bi-hand-thumbs-up"></i> Support
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- My Complaints -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4>My Complaints</h4>
+            
+            {% if complaints %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Votes</th>
+                                <th>Submitted</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                                <tr>
+                                    <td>#{{ complaint._id|string|truncate(6, True, '') }}</td>
+                                    <td>{{ complaint.title }}</td>
+                                    <td>{{ complaint.category }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if complaint.status == 'resolved' else 'warning' if complaint.status == 'work_in_progress' else 'primary' }}">
+                                            {{ complaint.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ complaint.vote_count }}</td>
+                                    <td>{{ complaint.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_complaint', complaint_id=complaint._id) }}" class="btn btn-sm btn-info">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    You haven't submitted any complaints yet. 
+                    <a href="{{ url_for('submit_complaint') }}">Submit your first complaint</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.vote-btn').click(function() {
+        const complaintId = $(this).data('complaint-id');
+        const btn = $(this);
+        
+        $.ajax({
+            url: `/complaint/${complaintId}/vote`,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    const badge = btn.closest('.card-body').find('.badge');
+                    badge.text(response.vote_count + ' votes');
+                    
+                    if (response.voted) {
+                        btn.removeClass('btn-outline-primary').addClass('btn-primary');
+                    } else {
+                        btn.removeClass('btn-primary').addClass('btn-outline-primary');
+                    }
+                }
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

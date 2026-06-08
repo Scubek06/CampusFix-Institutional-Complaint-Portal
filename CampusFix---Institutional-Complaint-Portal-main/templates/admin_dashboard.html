@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4 fade-in">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 dashboard-header">
+        <div>
+            <h2 class="mb-0 fw-bold">Admin Dashboard</h2>
+            <p class="text-muted">System Overview & Analytics</p>
+        </div>
+
+        <button class="btn btn-primary shadow-sm report-btn">
+            <i class="bi bi-file-earmark-bar-graph"></i> Generate Report
+        </button>
+    </div>
+
+
+    <!-- Stat Cards -->
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <div class="card stat-card gradient-blue shadow-lg animate-card">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Total Users</h6>
+
+                    <h2 class="display-6 fw-bold counter"
+                        data-target="{{ stats.total_users }}">0</h2>
+
+                    <hr class="my-2 opacity-25">
+
+                    <small>
+                        Students: {{ stats.students }} |
+                        Staff: {{ stats.staff }}
+                    </small>
+
+                    <i class="bi bi-people-fill stat-icon"></i>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card stat-card gradient-warning shadow-lg animate-card">
+                <div class="card-body">
+                    <h6 class="text-uppercase small fw-bold">Pending Actions</h6>
+
+                    <h2 class="display-6 fw-bold counter"
+                        data-target="{{ stats.pending_complaints }}">0</h2>
+
+                    <i class="bi bi-exclamation-circle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Charts + Recent -->
+    <div class="row mt-4">
+
+        <!-- Chart -->
+        <div class="col-lg-7">
+            <div class="card shadow-lg chart-card animate-slide">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Complaints by Category</h5>
+                </div>
+
+                <div class="card-body">
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Recent Complaints -->
+        <div class="col-lg-5">
+            <div class="card shadow-lg animate-slide">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Complaints</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+
+                <div class="card-body p-0">
+
+                    <div class="list-group list-group-flush complaint-list">
+
+                        {% for complaint in recent %}
+                        <div class="list-group-item p-3 complaint-item">
+
+                            <div class="d-flex justify-content-between align-items-start">
+
+                                <div>
+                                    <h6 class="mb-1 fw-bold">
+                                        {{ complaint.title }}
+                                    </h6>
+
+                                    <p class="mb-1 small text-muted">
+                                        {{ complaint.submitted_by_email }}
+                                    </p>
+                                </div>
+
+                                <span class="badge
+                                    {% if complaint.status == 'resolved' %}bg-success
+                                    {% elif complaint.status == 'work_in_progress' %}bg-info
+                                    {% else %}bg-warning text-dark{% endif %}">
+
+                                    {{ complaint.status|replace('_',' ')|title }}
+
+                                </span>
+
+                            </div>
+
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ complaint.created_at.strftime('%b %d, %Y') }}
+                            </small>
+
+                        </div>
+                        {% else %}
+
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted display-4"></i>
+                            <p class="text-muted mt-2">
+                                No recent complaints found.
+                            </p>
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Counter Animation -->
+<script>
+
+document.querySelectorAll(".counter").forEach(counter => {
+
+    const updateCount = () => {
+
+        const target = +counter.getAttribute("data-target");
+        const count = +counter.innerText;
+
+        const increment = target / 100;
+
+        if (count < target) {
+
+            counter.innerText = Math.ceil(count + increment);
+            setTimeout(updateCount, 20);
+
+        } else {
+
+            counter.innerText = target;
+
+        }
+    };
+
+    updateCount();
+
+});
+
+</script>
+
+{% endblock %}

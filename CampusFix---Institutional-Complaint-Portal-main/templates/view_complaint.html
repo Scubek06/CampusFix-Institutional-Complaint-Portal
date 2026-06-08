@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}View Complaint{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-10 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        {% if current_user.role == 'student' %}
+                            <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
+                        {% elif current_user.role == 'staff' %}
+                            <a href="{{ url_for('staff_dashboard') }}">Dashboard</a>
+                        {% elif current_user.role == 'admin' %}
+                            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                        {% endif %}
+                    </li>
+                    <li class="breadcrumb-item active">Complaint Details</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-ticket-detailed"></i> 
+                        Complaint #{{ complaint._id|string|truncate(8, True, '') }}
+                    </h4>
+                    <span class="badge bg-{{ 'success' if complaint.status == 'resolved' 
+                                           else 'warning' if complaint.status == 'work_in_progress'
+                                           else 'info' if complaint.status == 'under_review'
+                                           else 'primary' }} fs-6">
+                        {{ complaint.status.replace('_', ' ').title() }}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Complaint Details -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>{{ complaint.title }}</h5>
+                            <p class="text-muted">
+                                <i class="bi bi-tag"></i> {{ complaint.category }} |
+                                <i class="bi bi-geo-alt"></i> {{ complaint.location }} |
+                                <i class="bi bi-calendar"></i> {{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </p>
+                            
+                            <hr>
+                            
+                            <h6>Description:</h6>
+                            <p class="lead">{{ complaint.description }}</p>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Submitted By:</h6>
+                                    <p>
+                                        <strong>{{ submitted_by.username if submitted_by else 'Unknown' }}</strong><br>
+                                        <small>{{ complaint.submitted_by_email }}</small>
+                                    </p>
+                                    
+                                    {% if assigned_to %}
+                                        <h6 class="mt-3">Assigned To:</h6>
+                                        <p>
+                                            <strong>{{ assigned_to.username }}</strong><br>
+                                            <small>{{ assigned_to.department }}</small>
+                                        </p>
+                                    {% endif %}
+                                    
+                                    <div class="mt-3">
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-hand-thumbs-up"></i> {{ complaint.vote_count }} votes
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Images Section -->
+                    {% if complaint.images and complaint.images|length > 0 %}
+                        <hr>
+                        <h6>
+                            <i class="bi bi-images"></i> 
+                            Attached Images ({{ complaint.images|length }})
+                        </h6>
+                        <div class="row mt-3">
+                            {% for image in complaint.images %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <a href="{{ url_for('static', filename='uploads/' + image) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename='uploads/' + image) }}" 
+                                                 class="card-img-top img-fluid" 
+                                                 alt="Complaint image"
+                                                 style="height: 200px; object-fit: cover; cursor: pointer;"
+                                                 onclick="window.open(this.src, '_blank')">
+                                        </a>
+                                        <div class="card-footer text-center">
+                                            <small class="text-muted">{{ image }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary mt-3">
+                            <i class="bi bi-image"></i> No images attached to this complaint
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Status Timeline -->
+                    <hr>
+                    <h6><i class="bi bi-clock-history"></i> Status Timeline:</h6>
+                    <div class="timeline mt-3">
+                        {% for entry in complaint.timeline %}
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <span class="badge bg-{{ 'success' if entry.status == 'resolved' 
+                                                           else 'warning' if entry.status == 'work_in_progress'
+                                                           else 'info' if entry.status == 'under_review'
+                                                           else 'primary' }}">
+                                        {{ entry.status.replace('_', ' ').title() }}
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0">{{ entry.note }}</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                        {% if entry.updated_by %}
+                                            by {{ entry.updated_by }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Resolution Notes -->
+                    {% if complaint.resolution_notes %}
+                        <hr>
+                        <h6><i class="bi bi-check-circle"></i> Resolution Notes:</h6>
+                        <div class="alert alert-success">
+                            {{ complaint.resolution_notes }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Staff Update Form -->
+                    {% if current_user.role == 'staff' and complaint.assigned_to == current_user.id %}
+                        <hr>
+                        <h6><i class="bi bi-pencil-square"></i> Update Status:</h6>
+                        <form action="{{ url_for('update_complaint_status', complaint_id=complaint._id) }}" method="POST">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <select class="form-select" name="status" required>
+                                        <option value="">Select Status</option>
+                                        <option value="under_review">Under Review</option>
+                                        <option value="work_in_progress">Work in Progress</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" name="note" 
+                                           placeholder="Add update note (e.g., Work started, fixed, etc.)" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-check"></i> Update
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Created: {{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                            <i class="bi bi-arrow-clockwise"></i> Last Updated: {{ complaint.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                        </small>
+                        <div>
+                            <a href="{{ url_for('student_dashboard') if current_user.role == 'student' 
+                                     else url_for('staff_dashboard') if current_user.role == 'staff'
+                                     else url_for('admin_dashboard') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+.timeline .d-flex {
+    position: relative;
+}
+.timeline .d-flex:before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 24px;
+    bottom: -24px;
+    width: 2px;
+    background: #dee2e6;
+}
+.timeline .d-flex:last-child:before {
+    display: none;
+}
+</style>
+{% endblock %}

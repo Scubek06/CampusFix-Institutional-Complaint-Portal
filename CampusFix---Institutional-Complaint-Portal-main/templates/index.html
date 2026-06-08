@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row mt-5">
+        <div class="col-md-8 mx-auto text-center">
+            <h1 class="display-4">Welcome to CampusFix</h1>
+            <p class="lead">A transparent and efficient complaint management system for your campus</p>
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Get Started</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-lg">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-5 text-center">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h3>{{ stats.total_complaints }}</h3>
+                    <p>Total Complaints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h3>{{ stats.resolved_complaints }}</h3>
+                    <p>Resolved Complaints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h3>{{ stats.active_users }}</h3>
+                    <p>Active Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="row mt-5">
+        <h2 class="text-center mb-4">Key Features</h2>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-megaphone display-4 text-primary"></i>
+                    <h5 class="card-title">Easy Complaint Submission</h5>
+                    <p class="card-text">Submit complaints with title, description, location, and images</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up-arrow display-4 text-primary"></i>
+                    <h5 class="card-title">Real-time Tracking</h5>
+                    <p class="card-text">Track your complaint status from submission to resolution</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-hand-thumbs-up display-4 text-primary"></i>
+                    <h5 class="card-title">Voting Mechanism</h5>
+                    <p class="card-text">Support existing complaints to prioritize important issues</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Complaints -->
+    <div class="row mt-5">
+        <h2 class="text-center mb-4">Recent Complaints</h2>
+        
+        {% if recent_complaints %}
+            {% for complaint in recent_complaints %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ complaint.title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ complaint.category }} | {{ complaint.location }}</h6>
+                            <p class="card-text">{{ complaint.description[:150] }}...</p>
+                            <span class="badge bg-{{ 'success' if complaint.status == 'resolved' else 'warning' if complaint.status == 'work_in_progress' else 'primary' }}">
+                                {{ complaint.status.replace('_', ' ').title() }}
+                            </span>
+                            <small class="text-muted ms-2">{{ complaint.vote_count }} votes</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No complaints yet. Be the first to report an issue!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

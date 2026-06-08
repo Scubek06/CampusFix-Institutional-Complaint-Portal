@@ -1,0 +1,17 @@
+Flask
+Flask-PyMongo
+Flask-Login
+Flask-Bcrypt
+Flask-WTF
+Flask-Mail
+python-dotenv
+Pillow
+WTForms
+email-validator
+pymongo
+werkzeug
+itsdangerous
+jinja2
+MarkupSafe
+gunicorn
+dnspython

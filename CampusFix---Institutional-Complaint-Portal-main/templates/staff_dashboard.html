@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">Staff Dashboard</h2>
+            <p class="text-muted">Welcome, {{ current_user.username }}</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body text-center">
+                    <h6>Assigned Complaints</h6>
+                    <h2>{{ stats.assigned }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-warning">
+                <div class="card-body text-center">
+                    <h6>Pending Review</h6>
+                    <h2>{{ stats.pending }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body text-center">
+                    <h6>Resolved</h6>
+                    <h2>{{ stats.resolved }}</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+
+        <div class="card-body">
+
+            <a href="{{ url_for('manage_complaints') }}" class="btn btn-primary me-2">
+                <i class="bi bi-list-check"></i> View Assigned Complaints
+            </a>
+
+            <a href="{{ url_for('manage_complaints') }}?status=pending" class="btn btn-warning">
+                <i class="bi bi-hourglass"></i> Pending Complaints
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Charts + Recent Complaints -->
+    <div class="row mt-4">
+
+        <!-- Category Chart -->
+        <div class="col-lg-6 mb-3">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header">
+                    <h5 class="mb-0">Complaints by Category</h5>
+                </div>
+
+                <div class="card-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Recent Complaints -->
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Complaints</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="list-group">
+
+                        {% for complaint in complaints %}
+
+                        {% set status_color = {
+                            'resolved':'success',
+                            'work_in_progress':'warning',
+                            'under_review':'info'
+                        }.get(complaint.status,'secondary') %}
+
+                        <a href="{{ url_for('view_complaint', complaint_id=complaint._id) }}"
+                           class="list-group-item list-group-item-action">
+
+                            <div class="d-flex justify-content-between">
+
+                                <h6 class="mb-1">
+                                    {{ complaint.title }}
+                                </h6>
+
+                                <small class="text-muted">
+                                    {{ complaint.created_at.strftime('%Y-%m-%d') if complaint.created_at else '' }}
+                                </small>
+
+                            </div>
+
+                            <p class="mb-1 small text-muted">
+
+                                <strong>Category:</strong> {{ complaint.category }} <br>
+
+                                <strong>Location:</strong> {{ complaint.location }} <br>
+
+                                <strong>Description:</strong>
+                                {{ complaint.description[:100] if complaint.description else '' }}...
+
+                            </p>
+
+                            <!-- Images -->
+                            {% if complaint.images %}
+
+                            <div class="mb-2">
+
+                                <div class="d-flex flex-wrap gap-2">
+
+                                    {% for image in complaint.images[:3] %}
+
+                                    <img src="{{ url_for('static', filename='uploads/' + image) }}"
+                                         style="width:50px;height:50px;object-fit:cover;border-radius:6px;"
+                                         class="border">
+
+                                    {% endfor %}
+
+                                    {% if complaint.images|length > 3 %}
+                                    <span class="badge bg-secondary align-self-center">
+                                        +{{ complaint.images|length - 3 }} more
+                                    </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                            {% endif %}
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <span class="badge bg-{{ status_color }}">
+                                    {{ complaint.status.replace('_',' ').title() }}
+                                </span>
+
+                                <small class="text-muted">
+
+                                    <i class="bi bi-hand-thumbs-up"></i>
+                                    {{ complaint.vote_count or 0 }}
+
+                                    {% if complaint.images %}
+                                    <i class="bi bi-image ms-2"></i>
+                                    {{ complaint.images|length }}
+                                    {% endif %}
+
+                                </small>
+
+                            </div>
+
+                        </a>
+
+                        {% else %}
+
+                        <div class="alert alert-info">
+                            No complaints assigned to you.
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const chartLabels = JSON.parse('{{ category_wise.keys() | list | tojson }}');
+    const chartData = JSON.parse('{{ category_wise.values() | list | tojson }}');
+
+    const ctx = document.getElementById("categoryChart");
+
+    if (ctx) {
+
+        new Chart(ctx, {
+
+            type: "pie",
+
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: [
+                        "#36A2EB",
+                        "#FF6384",
+                        "#FFCE56",
+                        "#4BC0C0",
+                        "#9966FF",
+                        "#FF9F40"
+                    ]
+                }]
+            },
+
+            options: {
+                responsive: true
+            }
+
+        });
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

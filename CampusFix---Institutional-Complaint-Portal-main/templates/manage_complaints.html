@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Complaints{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-12">
+            <h2>Manage Complaints</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('staff_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Manage Complaints</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'all' %}active{% endif %}" 
+                       href="{{ url_for('manage_complaints') }}?status=all">All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'submitted' %}active{% endif %}" 
+                       href="{{ url_for('manage_complaints') }}?status=submitted">Submitted</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'under_review' %}active{% endif %}" 
+                       href="{{ url_for('manage_complaints') }}?status=under_review">Under Review</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'work_in_progress' %}active{% endif %}" 
+                       href="{{ url_for('manage_complaints') }}?status=work_in_progress">In Progress</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'resolved' %}active{% endif %}" 
+                       href="{{ url_for('manage_complaints') }}?status=resolved">Resolved</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Complaints List -->
+    <div class="row mt-4">
+        <div class="col-12">
+            {% if complaints %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Description</th>
+                                <th>Images</th>
+                                <th>Status</th>
+                                <th>Votes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in complaints %}
+                                <tr>
+                                    <td>#{{ complaint._id|string|truncate(6, True, '') }}</td>
+                                    <td>{{ complaint.title }}</td>
+                                    <td>{{ complaint.category }}</td>
+                                    <td>{{ complaint.location }}</td>
+                                    <td>
+                                        <span title="{{ complaint.description }}">
+                                            {{ complaint.description[:50] }}...
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if complaint.images and complaint.images|length > 0 %}
+                                            <div class="d-flex gap-1">
+                                                {% for image in complaint.images[:2] %}
+                                                    <img src="{{ url_for('static', filename='uploads/' + image) }}" 
+                                                         alt="img" 
+                                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px; cursor: pointer;"
+                                                         class="border"
+                                                         onclick="window.open(this.src, '_blank')">
+                                                {% endfor %}
+                                                {% if complaint.images|length > 2 %}
+                                                    <span class="badge bg-secondary">+{{ complaint.images|length - 2 }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No images</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if complaint.status == 'resolved' 
+                                                               else 'warning' if complaint.status == 'work_in_progress'
+                                                               else 'info' if complaint.status == 'under_review'
+                                                               else 'primary' }}">
+                                            {{ complaint.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ complaint.vote_count }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_complaint', complaint_id=complaint._id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No complaints found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

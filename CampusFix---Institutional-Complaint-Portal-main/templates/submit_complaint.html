@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Complaint{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Submit New Complaint</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Complaint Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="Brief title describing the issue">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                    <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" required
+                                   placeholder="e.g., Room 201, Block A, Hostel 3">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Detailed Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required
+                                      placeholder="Please provide detailed information about the issue..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Supporting Images (Optional)</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                            <div id="image-preview" class="d-flex flex-wrap mt-2"></div>
+                            <small class="text-muted">You can upload multiple images (JPG, PNG, GIF)</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I confirm that the information provided is accurate and true
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Submit Complaint</button>
+                            <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Guidelines -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Submission Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Provide a clear and concise title</li>
+                        <li>Include exact location details for faster resolution</li>
+                        <li>Describe the issue in detail</li>
+                        <li>Upload clear images if applicable</li>
+                        <li>Duplicate complaints will be merged</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
